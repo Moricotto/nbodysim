@@ -4,10 +4,10 @@ DBGCFLAGS = -ggdb -O0 -g -no-pie
 RELCFLAGS = -O3 -D NDEBUG
 CFLAGS = $(DBGCFLAGS) $(CCFLAGS)
 LFLAGS = $(DBGCFLAGS) $(CCFLAGS)
-LIBS = 
+LIBS = -lglfw3 -lopengl32 -lgdi32 -luser32 -lkernel32 -lshell32 -lwinmm
 
 # Source files
-FILES = main
+FILES = main sim glad
 SOURCES = $(addsuffix .cpp,$(addprefix $(SRCDIR)/,$(FILES)))
 OBJECTS = $(addsuffix .o,$(addprefix $(BUILDDIR)/,$(FILES)))
 DEPS = $(addsuffix .d,$(addprefix $(BUILDDIR)/,$(FILES)))
@@ -18,7 +18,7 @@ SRCDIR = src
 BUILDDIR = obj
 TARGETDIR = bin
 LIBDIR = lib
-HEADERS = 
+HEADERS = -Iinclude/GLFW -Iinclude
 
 $(TARGETDIR)/$(TARGET): $(OBJECTS) 
 	$(CC) $(LFLAGS) -o $(TARGETDIR)/$(TARGET) $^ -L$(LIBDIR) $(LIBS)
