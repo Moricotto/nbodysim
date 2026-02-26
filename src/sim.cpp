@@ -1,4 +1,5 @@
 #include "sim.hpp"
+#include <glm/glm.hpp>
 #include <cstdio>
 constexpr Num EPSILON = 0;
 constexpr Num EPSILON_SQ = EPSILON * EPSILON;
@@ -15,7 +16,8 @@ void update(std::vector<Body>& bodies, double dt) {
         for (size_t j = 0; j < bodies.size(); j++) {
             if (j == i) continue;
             Vec r = bodies[j].position - bodies[i].position; //vector from i to j
-            Num distance_sq = r.magnitudeSquared();
+						// this represent the squared distance
+            Num distance_sq = glm::dot(r, r);
             Num denom = EPSILON_SQ + distance_sq;
             acceleration += r * bodies[j].mass / std::sqrt(denom * denom * denom);
         }
