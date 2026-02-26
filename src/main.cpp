@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstdio>
 #include "sim.hpp"
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 constexpr size_t STEPS = 365;
 constexpr Num dt = 1.0/(365*10);
