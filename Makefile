@@ -4,10 +4,10 @@ DBGCFLAGS = -ggdb -O0 -g -no-pie
 RELCFLAGS = -O3 -D NDEBUG
 CFLAGS = $(DBGCFLAGS) $(CCFLAGS)
 LFLAGS = $(DBGCFLAGS) $(CCFLAGS)
-LIBS = -lglfw3 -lopengl32 -lgdi32 -luser32 -lkernel32 -lshell32 -lwinmm
+LIBS = -lglfw3 -lopengl32 -lwinmm -lgdi32 -luser32 -lkernel32 -lshell32 
 
 # Source files
-FILES = main sim glad
+FILES = main sim render input glad
 SOURCES = $(addsuffix .cpp,$(addprefix $(SRCDIR)/,$(FILES)))
 OBJECTS = $(addsuffix .o,$(addprefix $(BUILDDIR)/,$(FILES)))
 DEPS = $(addsuffix .d,$(addprefix $(BUILDDIR)/,$(FILES)))
