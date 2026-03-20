@@ -62,3 +62,67 @@ int main() {
     return 0;
 
 }
+/// 
+GLuint compileShader(GLenum shaderType, const char* shaderSrc){
+
+    GLuint shader;
+    shader = glCreateShader(shaderType);
+		if (shader == 0){
+			return 0;
+		}
+    glShaderSource(shader, 1, &shaderSrc, NULL);
+    glCompileShader(shader);
+    int  success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if(!success) {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+				return 0;
+    }
+		return shader;
+}
+GLuint linkShaderToProgram(GLuint vertexShader, GLuint fragmentShader){
+    GLuint shaderProgram;
+		GLint success;
+		char infoLog[512];
+		
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+				return 0;
+    }
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+		return shaderProgram;
+
+}
+
+GLFWwindow* initWindow(int width, int height) {
+    //SECTION: initialise window
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    GLFWwindow* window = glfwCreateWindow(width, height, "NBodySim", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return NULL;
+    }
+    glfwMakeContextCurrent(window);    
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return NULL;
+    }
+    glViewport(0, 0, width, height);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+		return window;
+}

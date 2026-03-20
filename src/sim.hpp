@@ -1,11 +1,11 @@
 #ifndef SIM_HPP
 #define SIM_HPP
 
-#include "vec.hpp"
 #include <vector>
+#include <glm/vec3.hpp>
 
 typedef double Num;
-typedef Vec3d<Num> Vec;
+typedef glm::dvec3 Vec;
 
 constexpr Num TAU = 2 * 3.14159265358979323846;
 constexpr Num G = TAU * TAU; //time in years, distance in AU, mass in solar mass
