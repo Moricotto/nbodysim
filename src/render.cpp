@@ -5,6 +5,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+unsigned int compileShader(const char* source, int type) {
+    unsigned int id = glCreateShader(type);
+    glShaderSource(id, 1, &source, NULL);
+    glCompileShader(id);
+    int  success;
+    char infoLog[512];
+    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
+    if(!success) {
+        glGetShaderInfoLog(id, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+    return id;
+}
 
 
 GLFWwindow* createWindow(unsigned int width, unsigned int height, const char* title) {
