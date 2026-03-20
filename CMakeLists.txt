@@ -11,11 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SOURCES_FILES src/glad.c src/main.cpp src/sim.cpp src/render.cpp src/input.cpp)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(WIN32)
-  set(TARGET main.exe)
-elseif(UNIX)
-  set(TARGET main)
-endif()
+set(TARGET nbody)
 
 FetchContent_Declare(
   glfw
