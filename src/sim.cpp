@@ -1,7 +1,7 @@
 #include "sim.hpp"
 #include <glm/glm.hpp>
 #include <cstdio>
-constexpr Num EPSILON = 0;
+constexpr Num EPSILON = 0.01;
 constexpr Num EPSILON_SQ = EPSILON * EPSILON;
 
 void update(std::vector<Body>& bodies, double dt) {
