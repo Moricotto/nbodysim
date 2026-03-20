@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(SOURCES_FILES src/glad.c src/main.cpp src/sim.cpp)
+set(SOURCES_FILES src/glad.c src/main.cpp src/sim.cpp src/render.cpp src/input.cpp)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(WIN32)
