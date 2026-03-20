@@ -137,6 +137,20 @@ void processInput(GLFWwindow *window, std::vector<Body>& bodies, Num scaleX, Num
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.target -= up * panAmount;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera.target -= right * panAmount;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera.target += right * panAmount;
+    //center on barycenter when space is pressed
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        Vec barycenter(0.0, 0.0, 0.0);
+        Num totalMass = 0.0;
+        for (const Body& body : bodies) {
+            const Num mass = body.mu / G;
+            barycenter += body.position * mass;
+            totalMass += mass;
+        }
+        if (totalMass > 0.0) {
+            barycenter /= totalMass;
+            camera.target = glm::vec3(barycenter.x, barycenter.y, barycenter.z);
+        }
+    }
 
     if (pendingScrollY != 0.0f) {
         camera.distance -= pendingScrollY * camera.zoomSensitivity;
@@ -185,8 +199,8 @@ void processInput(GLFWwindow *window, std::vector<Body>& bodies, Num scaleX, Num
 
         const Vec dragVector = releasePos - pressPos;
 
-        constexpr Num NEW_BODY_MASS = 1e-4; //around a third of earth's mass; arbitrary choice
-        constexpr Num VELOCITY_SCALE = 4.0;
+        constexpr Num NEW_BODY_MASS = 1e-3; //1/1000 of solar mass
+        constexpr Num VELOCITY_SCALE = 0.2;
         const Vec launchVelocity = dragVector * VELOCITY_SCALE;
 
         bodies.emplace_back(NEW_BODY_MASS, releasePos, launchVelocity);

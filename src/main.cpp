@@ -11,7 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 constexpr size_t STEPS = 365;
-constexpr Num dt = 1.0/(365*10);
+constexpr Num dt = 1.0/(365);
 
 constexpr float SCALE_X = 2;
 constexpr float SCALE_Y = 2;
@@ -40,7 +40,7 @@ const char *fragShaderSource = "#version 330 core\n"
         "if (d > 0.5) discard;\n"
         "float edgeAlpha = 1.0 - smoothstep(0.42, 0.5, d);\n"
         "float distAlpha = 1.0 - smoothstep(uFadeNear, uFadeFar, vViewDistance);\n"
-        "float alpha = edgeAlpha * clamp(distAlpha, 0.0, 1.0);\n"
+        "float alpha = edgeAlpha * clamp(distAlpha, 0.2, 1.0);\n"
         "FragColor = vec4(1.0, 1.0, 1.0, alpha);\n"
     "}\n";
 
@@ -65,7 +65,7 @@ int main() {
         3.0f,
         0.15f,
         0.8f,
-        1.0f,
+        0.5f,
         50.0f
     };
     float previousTime = static_cast<float>(glfwGetTime());
