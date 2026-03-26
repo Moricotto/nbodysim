@@ -4,7 +4,7 @@
 
 #include <limits>
 #include <stdint.h>
-#include "sim.hpp"
+#include "../sim.hpp"
 
 /**
  * @brief Represents the Octree class to implement barnes-hut algorithm
