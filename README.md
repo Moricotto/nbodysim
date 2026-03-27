@@ -27,11 +27,11 @@ After building you should be able to run the project depending on your os.
 
 **On Windows**:
 ```shell
-.\build\main.exe
+.\build\nbody.exe
 ```
 **On Linux or Mac**:
 ```shell
-./build/main
+./build/nbody
 ```
 
 ### Note on VSCode.
