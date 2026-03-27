@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "container/octree.hpp"
 
 constexpr size_t STEPS = 365;
 constexpr Num dt = 1.0/(365);
@@ -50,6 +51,7 @@ int main() {
     Body mars(3.2e-7, Vec(1.52, 0, 0), Vec(0, 5.05, 0));
     Body sun(1, Vec(0, 0, 0), Vec(0, 0, 0));
     std::vector<Body> bodies = {};
+		Octree<Body> tree(bodies);
     //SECTION: initialise window
     GLFWwindow* window = createWindow(800, 600, "N-Body Simulation");
     glEnable(GL_PROGRAM_POINT_SIZE);

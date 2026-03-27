@@ -1,38 +1,25 @@
 #include "octree.hpp"
 #include <algorithm>
 #include <numeric>
-
-// template <typename T>
-// class Octree {
-// 	static_assert(std::is_same<decltype(T::position), Vec>::value && (std::is_same< decltype(T::mass), float>::value || std::is_same< decltype(T::mass), double>::value));
-//
-//
-// 	class Node {
-// 		decltype(T::mass) mass;
-// 		size_t depth;
-// 		Node parent;
-// 		Node childrens[8];
-// 		std::vector<T> bodies;
-// 	};
-//
-// 	public:
-// 	Octree();
-// 	void rearrange();
-// 	void addBodies(T bodies...);
-// };
-
-
+#include "../sim.hpp"
 
 template <typename T>
 Octree<T>::Octree(std::vector<T> &bodies){
-	std::pair<double, double> xBound = std::minmax(bodies, [](const T &a, const T &b) {return a.position.x < b.position.x;});
-	std::pair<double, double> yBound = std::minmax(bodies, [](const T &a, const T &b) {return a.position.y < b.position.y;});
-	std::pair<double, double> zBound = std::minmax(bodies, [](const T &a, const T &b) {return a.position.z < b.position.z;});
+	auto xBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.x < b.position.x;});
+	auto yBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.y < b.position.y;});
+	auto zBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.z < b.position.z;});
 
+	if (xBound.first != bodies.end()){
+		this->bounds.first = Vec(xBound.first->position.x, yBound.first->position.y, zBound.first->position.z);
+		this->bounds.second = Vec(xBound.second->position.x, yBound.second->position.y, zBound.second->position.z);
+	}
+	else {
+		this->bounds.first = Vec(0.0);
+		this->bounds.second = Vec(0.0);
+	}
 	// update the bounds
-	this->bounds.first = Vec(xBound.first, yBound.first, zBound.first);
-	this->bounds.second = Vec(xBound.second, yBound.second, zBound.second);
-	this->root = Node {.bodies = std::vector<T*>(bodies.size()) , .depth = 0, .tree = this};
+	this->root = new Node {.tree = this,.depth = 0, .bodies = std::vector<T*>(bodies.size()) , };
+	// this is fine to take the pointer of the objects because the container shouldn't live in the lifetime of the vector
 	std::transform(bodies.begin(), bodies.end(), this->root->bodies.begin(), [](auto body) {return &body;});
 	this->rearrange();
 }
@@ -58,15 +45,11 @@ void Octree<T>::rearrange() {
 */
 template <typename T>
 void Octree<T>::Node::partition(const Bounds& bounds){
-	if (this->bodies->size() <= tree->maxBodyPerNode){
+	if (this->bodies.size() <= tree->maxBodyPerNode){
+		std::function<Vec(Vec, T*)> addFunc = [](Vec accum, T* body) {return accum + body->mu * body->position;};
+		Mass total_mass = std::accumulate(this->bodies.begin(), this->bodies.end(), Mass(0), [](Mass accum, auto body) {return accum + body->mu;});
 
-		auto begin = this->bodies.first();
-		auto end = this->bodies.end();
-
-
-		Mass total_mass = std::accumulate(begin, end, Mass(0), [](Mass accum, auto body) {return accum + body->mass;});
-		Vec center_mass = std::accumulate(begin, end, Vec(0),
-				[](auto body, Vec accum) {return accum + body->mass * body->position;}) / (this->bodies->size());
+		Vec center_mass = std::accumulate(this->bodies.begin(), this->bodies.end(), Vec(0.0), addFunc) / total_mass;
 		this->center_of_mass = center_mass;
 		this->mass = total_mass;
 		return;
@@ -88,11 +71,10 @@ void Octree<T>::Node::partition(const Bounds& bounds){
 		this->bodies.pop_back();
 		bool found = false;
 
-
 		for (int j = 0; j < 8; j++){
-			if (!Node::PointInBounds(body->position, subBounds[i]))
+			if (!Node::PointInBounds((*body)->position, subBounds[i]))
 				continue;
-			this->children[i].bodies.push_back(body);
+			this->children[i].bodies.push_back(*body);
 			found = true;
 			break;
 		}
@@ -105,15 +87,23 @@ void Octree<T>::Node::partition(const Bounds& bounds){
 		this->children[i].partition(subBounds[i]);
 	}
 
+	// update the mass and center of mass
+	Mass m = 0.0;
+	Vec center_of_mass = Vec(0.0f);
 
+	for (int i = 0; i < 8; i++){
+		center_of_mass += this->children[i].center_of_mass * this->children[i].mass;
+		m += this->children[i].mass;
+	}
 
-	
-
+	this->center_of_mass = center_of_mass / m;
+	this->mass = m;
 }
 
 template <typename T>
 void Octree<T>::Node::partition(){
-	partition(getBounds());
+	Bounds bounds = getBounds();
+	this->partition(bounds);
 }
 
 
@@ -144,15 +134,14 @@ void Octree<T>::Node::initChildren(){
 // Avoid memory leaks
 template <typename T> 
 void Octree<T>::Node::deleteChildren(){
-	if (this->children == nullptr)
+	if (children == nullptr)
 		return;
 	for (int i = 0; i < 8; i++){
 		Node child = this->children[i];
-		child.deleteChildren();
+			child.deleteChildren();
 	}
-
-	delete []children;
-	this->children = nullptr;
+	delete[] this->children;
+	this->children  = nullptr;
 }
 template <typename T>
 bool Octree<T>::Node::PointInBounds(const Vec &point, const Bounds& bounds) {
@@ -224,3 +213,5 @@ template <typename T>
 bool Octree<T>::Node::isLeafNode() {
 	return this->children == nullptr;
 }
+
+template class Octree<Body>;

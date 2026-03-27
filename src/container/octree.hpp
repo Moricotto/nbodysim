@@ -2,7 +2,6 @@
 
 #define OCTREE_CLASS_H
 
-#include <limits>
 #include <stdint.h>
 #include "../sim.hpp"
 
@@ -16,9 +15,9 @@
 */
 template <typename T>
 class Octree {
-	static_assert(std::is_same<decltype(T::position), Vec>::value && (std::is_same< decltype(T::mass), float>::value || std::is_same< decltype(T::mass), double>::value) && (std::is_constructible_v<Vec, double> || std::is_constructible_v<Vec, float>));
+	static_assert(std::is_same<decltype(T::position), Vec>::value && (std::is_same< decltype(T::mu), float>::value || std::is_same< decltype(T::mu), double>::value) && (std::is_constructible_v<Vec, double> || std::is_constructible_v<Vec, float>));
 
-	using Mass     = decltype(T::mass);
+	using Mass     = decltype(T::mu);
 	typedef std::pair<Vec, Vec> Bounds;
 
 
@@ -47,7 +46,7 @@ class Octree {
 		// The node parent
 		Node* parent = nullptr;
 		// The node childrens
-		Node children[8] = nullptr;
+		Node* children = nullptr;
 		// The bodies that are contains in this code (Only for leaf nodes)
 		std::vector<T*> bodies;
 
@@ -67,8 +66,8 @@ class Octree {
 
 	// the number of bodies in this octree
 	size_t size;
-	// The root node
-	Node* root = nullptr;
+	// The root node Node* root = nullptr;
+	Node* root;
 	// maximum bodies per leaf nodes	
 	unsigned int maxBodyPerNode = 5;
 
