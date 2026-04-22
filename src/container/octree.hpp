@@ -15,9 +15,9 @@
 */
 template <typename T>
 class Octree {
-	static_assert(std::is_same<decltype(T::position), Vec>::value && (std::is_same< decltype(T::mu), float>::value || std::is_same< decltype(T::mu), double>::value) && (std::is_constructible_v<Vec, double> || std::is_constructible_v<Vec, float>));
+	static_assert(std::is_same<decltype(T::position), Vec>::value && (std::is_same< decltype(T::mass), float>::value || std::is_same< decltype(T::mass), double>::value) && (std::is_constructible_v<Vec, double> || std::is_constructible_v<Vec, float>));
 
-	using Mass     = decltype(T::mu);
+	using Mass     = decltype(T::mass);
 	typedef std::pair<Vec, Vec> Bounds;
 
 
@@ -37,6 +37,7 @@ class Octree {
 		Mass mass = 0;
 		// the center of mass of the node
 		Vec center_of_mass = Vec(0.0);
+    Vec netForce = Vec(0.0);
 
 		NodePosition position;
 
@@ -56,10 +57,14 @@ class Octree {
 		Bounds getBounds();
 		void deleteChildren();
 		void initChildren();
+    void update(const float G, const float dt);
+    static void updateAcceleration(const float theta, const float G, const float dt, T* body, Node* node, Bounds bounds); 
+    
 
 		private:
 		static bool PointInBounds(const Vec& point, const Bounds& bounds);
 		static Bounds GetSubBound(const NodePosition &position, const Bounds& bounds);
+    float getWidth(Bounds bounds);
 		bool isLeafNode();
 		bool isRootNode();
 	};
@@ -75,7 +80,15 @@ class Octree {
 	Bounds bounds;
 	public:
 	~Octree();
+  
+  enum class Coords  {
+    X,
+    Y,
+    Z,
+  };
+  static Bounds calculateBounds(const std::vector<T>& bodies, Coords coords);
 	Octree(std::vector<T> &bodies);
+
 	/**
 	 * Rearrange the tree when it's internals node have been changed 
 	 */
@@ -85,7 +98,9 @@ class Octree {
 	 * This method manage the items
 	 * @param bodies The bodies to add to the tree.
 	 */
+  void update(const float G, const float dt);
 	
 };
+
 
 #endif

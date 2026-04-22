@@ -1,26 +1,33 @@
 #include "octree.hpp"
 #include <algorithm>
+#include <limits>
 #include <numeric>
+#include <iostream>
+#include <cmath>
+#include <glm/glm.hpp>
 #include "../sim.hpp"
+constexpr float EPSILON = 0.01;
+constexpr float EPSILON_SQ = EPSILON * EPSILON;
 
 template <typename T>
 Octree<T>::Octree(std::vector<T> &bodies){
-	auto xBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.x < b.position.x;});
-	auto yBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.y < b.position.y;});
-	auto zBound = std::minmax_element(bodies.begin(), bodies.end(), [](const T &a, const T &b) {return a.position.z < b.position.z;});
+  Bounds xBound = calculateBounds(bodies, Coords::X);
+  Bounds yBound = calculateBounds(bodies, Coords::Y);
+  Bounds zBound = calculateBounds(bodies, Coords::Z);
 
-	if (xBound.first != bodies.end()){
-		this->bounds.first = Vec(xBound.first->position.x, yBound.first->position.y, zBound.first->position.z);
-		this->bounds.second = Vec(xBound.second->position.x, yBound.second->position.y, zBound.second->position.z);
-	}
-	else {
-		this->bounds.first = Vec(0.0);
-		this->bounds.second = Vec(0.0);
+  this->bounds.first = Vec(0.0);
+  this->bounds.second = Vec(0.0);
+
+	if (bodies.size() != 0){
+		this->bounds.first = Vec(xBound.first.x, yBound.first.y, zBound.first.z);
+		this->bounds.second = Vec(xBound.second.x, yBound.second.y, zBound.second.z);
 	}
 	// update the bounds
-	this->root = new Node {.tree = this,.depth = 0, .bodies = std::vector<T*>(bodies.size()) , };
-	// this is fine to take the pointer of the objects because the container shouldn't live in the lifetime of the vector
-	std::transform(bodies.begin(), bodies.end(), this->root->bodies.begin(), [](auto body) {return &body;});
+	this->root = new Node {.tree = this,.depth = 0, .bodies = std::vector<T*>() , };
+  this->root->bodies.reserve(bodies.size());
+  for (int i = 0; i < bodies.size(); i++){
+    this->root->bodies.push_back(&bodies[i]);
+  }
 	this->rearrange();
 }
 
@@ -39,6 +46,11 @@ void Octree<T>::rearrange() {
 	this->root->partition();
 }
 
+template <typename T>
+void Octree<T>::update(const float G, const float dt){
+  this->root->update(G, dt);
+}
+
 /**
  * @brief this function partition the bodies When we add new Data to each nodes
  * Subdivide 
@@ -46,8 +58,8 @@ void Octree<T>::rearrange() {
 template <typename T>
 void Octree<T>::Node::partition(const Bounds& bounds){
 	if (this->bodies.size() <= tree->maxBodyPerNode){
-		std::function<Vec(Vec, T*)> addFunc = [](Vec accum, T* body) {return accum + body->mu * body->position;};
-		Mass total_mass = std::accumulate(this->bodies.begin(), this->bodies.end(), Mass(0), [](Mass accum, auto body) {return accum + body->mu;});
+		std::function<Vec(Vec, T*)> addFunc = [](Vec accum, T* body) {return accum + body->mass * body->position;};
+		Mass total_mass = std::accumulate(this->bodies.begin(), this->bodies.end(), Mass(0), [](Mass accum, auto body) {return accum + body->mass;});
 
 		Vec center_mass = std::accumulate(this->bodies.begin(), this->bodies.end(), Vec(0.0), addFunc) / total_mass;
 		this->center_of_mass = center_mass;
@@ -67,14 +79,14 @@ void Octree<T>::Node::partition(const Bounds& bounds){
 		subBounds[i] = Node::GetSubBound(pos, bounds);
 	}
 	for (int i = 0; i < n; i++){
-		auto body = std::move(this->bodies.end());
+		auto body = std::move(this->bodies.back());
 		this->bodies.pop_back();
 		bool found = false;
 
 		for (int j = 0; j < 8; j++){
-			if (!Node::PointInBounds((*body)->position, subBounds[i]))
+			if (!Node::PointInBounds(body->position, subBounds[j]))
 				continue;
-			this->children[i].bodies.push_back(*body);
+			this->children[j].bodies.push_back(body);
 			found = true;
 			break;
 		}
@@ -100,6 +112,66 @@ void Octree<T>::Node::partition(const Bounds& bounds){
 	this->mass = m;
 }
 
+/**
+ * @brief this function partition the bodies When we add new Data to each nodes
+ * Subdivide 
+*/
+template <typename T>
+void Octree<T>::Node::update(const float G, const float dt){
+  if (this->mass == 0){
+    return;
+  }
+  if (!isLeafNode()){
+    for (int i = 0; i > 8; i++){
+      this->children[i].update(G, dt);
+    }
+  }
+  Node* root = this->tree->root;
+  Bounds bounds = this->getBounds();
+  float theta = 0.5f;
+  
+	
+  for (T* body : bodies){
+    body->acceleration = Vec(0.0);
+    updateAcceleration(theta, G, dt, body, root, bounds);
+  }
+}
+
+template <typename T>
+void Octree<T>::Node::updateAcceleration(const float theta, const float G, const float dt, T* body, Node* node, Bounds bounds){
+
+    auto distance = [](Vec a, Vec b){
+      return std::sqrt((a.x - b.x) * (a.y - b.y) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
+    };
+    float d = distance(body->position, node->center_of_mass);
+    float s = node->getWidth(bounds);
+    Vec r = node->center_of_mass - body->position; //vector from i to j
+    // this represent the squared distance
+
+    if (s / d < theta){
+      float distance_sq = glm::dot(r, r);
+      float denom = EPSILON_SQ + distance_sq;
+      body->acceleration +=  (G * node->mass) / std::sqrt(denom * denom * denom) * r;
+      return;
+    }
+
+    if (node->isLeafNode()){
+      for (auto b : node->bodies){
+        if (b == body) continue; 
+          Vec r = b->position - body->position;
+          float distance_sq = glm::dot(r, r);
+          float denom = EPSILON_SQ + distance_sq;
+          body->acceleration +=  (G * node->mass) / std::sqrt(denom * denom * denom) * r;
+      }
+      return;
+    }
+    for (int i = 0; i < 8; i++){
+      NodePosition pos = static_cast<NodePosition>(i);
+      Bounds childBound = Node::GetSubBound(pos, bounds);
+      updateAcceleration(theta, G, dt, body, &node->children[i], childBound);
+    }
+}
+
 template <typename T>
 void Octree<T>::Node::partition(){
 	Bounds bounds = getBounds();
@@ -107,6 +179,14 @@ void Octree<T>::Node::partition(){
 }
 
 
+template<typename T>
+float Octree<T>::Node::getWidth(Bounds bounds){
+  float xWidth = std::abs(bounds.first.x - bounds.second.x);
+  float yWidth = std::abs(bounds.first.y - bounds.second.y);
+  float zWidth = std::abs(bounds.first.z - bounds.second.z);
+
+  return std::min(std::min(xWidth, yWidth), zWidth);
+}
 
 
 template <typename T>
@@ -125,9 +205,10 @@ void Octree<T>::Node::initChildren(){
 		return;
 	this->children = new Node[8];
 	for (int i = 0; i < 8; i++){
-		Node child = this->children[i];
+		Node& child = this->children[i];
 		child.position = static_cast<NodePosition>(i);
 		child.parent = this;
+    child.tree = this->tree;
 	}
 }
 
@@ -168,7 +249,7 @@ Octree<T>::Bounds Octree<T>::Node::GetSubBound(
 		case NodePosition::BOTTOM_TOP_RIGHT:
 		case NodePosition::BOTTOM_BOTTOM_RIGHT:
 		xMin = center.x;
-		xMax = bounds.second.z;
+		xMax = bounds.second.x;
 		break;
 		default:
 		xMin = bounds.first.x;
@@ -213,5 +294,41 @@ template <typename T>
 bool Octree<T>::Node::isLeafNode() {
 	return this->children == nullptr;
 }
+
+template <typename T> 
+
+
+Octree<T>::Bounds Octree<T>::calculateBounds(const std::vector<T>& bodies, Coords coords){
+  float inf = std::numeric_limits<float>::max();
+  float ninf = std::numeric_limits<float>::min();
+  Bounds bound = {Vec(inf), Vec(ninf)};
+  for (T body : bodies) {
+    switch (coords) {
+      case Coords::X:
+        if (body.position.x < bound.first.x)
+          bound.first.x = body.position.x;
+
+        if (body.position.x > bound.second.x)
+          bound.second.x = body.position.x;
+        break;
+      case Coords::Y:
+        if (body.position.y < bound.first.y)
+          bound.first.y = body.position.y;
+
+        if (body.position.y > bound.second.y)
+          bound.second.y = body.position.y;
+        break;
+      case Coords::Z:
+        if (body.position.z < bound.first.z)
+          bound.first.z = body.position.z;
+
+        if (body.position.z > bound.second.z)
+          bound.second.z = body.position.z;
+        break;
+    }
+  }
+  return bound;
+}
+
 
 template class Octree<Body>;
