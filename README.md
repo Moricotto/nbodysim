@@ -3,7 +3,7 @@
 N body simulation in opengl and with c++.
 
 ## Building
-To build the project you will need to have `cmake` installed.
+To build the project you will need to have `cmake` installed. Consult the following website for details on how to do this: https://cmake.org/cmake/help/latest/command/install.html. 
 
 1. Create a build directory
 ```shell
@@ -27,11 +27,11 @@ After building you should be able to run the project depending on your os.
 
 **On Windows**:
 ```shell
-.\build\main.exe
+.\build\nbody.exe
 ```
 **On Linux or Mac**:
 ```shell
-./build/main
+./build/nbody
 ```
 
 ### Note on VSCode.
