@@ -3,7 +3,7 @@
 N body simulation in opengl and with c++.
 
 ## Building
-To build the project you will need to have `cmake` installed.
+To build the project you will need to have `cmake` installed. Consult the following website for details on how to do this: https://cmake.org/cmake/help/latest/command/install.html. 
 
 1. Create a build directory
 ```shell
