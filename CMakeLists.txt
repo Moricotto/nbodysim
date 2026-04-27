@@ -7,8 +7,9 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_BUILD_TYPE Debug)
 
-set(SOURCES_FILES src/glad.c src/main.cpp src/sim.cpp src/render.cpp src/input.cpp)
+set(SOURCES_FILES src/glad.c src/main.cpp src/sim.cpp src/render.cpp src/input.cpp src/container/octree.cpp)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(TARGET nbody)

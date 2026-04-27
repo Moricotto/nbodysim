@@ -13,9 +13,9 @@ def plot_multiple_datasets(datasets, labels=None):
         else:
             plt.plot(x, data, marker='o')
 
-    plt.xlabel('Index')
-    plt.ylabel('Value')
-    plt.title('Multiple Broken Line Graphs')
+    plt.xlabel('Number of Bodies')
+    plt.ylabel('Time per Step')
+    plt.title('Time per Step for Various Algorithms')
     
     if labels:
         plt.legend()
@@ -26,10 +26,9 @@ def plot_multiple_datasets(datasets, labels=None):
 
 # Example usage
 data1 = [0.061, 0.26, 0.60, 1.06, 1.65, 2.41, 3.26, 4.23, 5.19, 6.41]
-data2 = [2, 4, 1, 6]
-data3 = [3, 2, 4, 3]
+data2 = [0.0007887, 0.00147, 0.0023394, 0.003037, 0.003801, 0.005454, 0.0055342, 0.0066441, 0.006753, 0.0102076]
 
 plot_multiple_datasets(
-    [data1, data2, data3],
-    labels=['Dataset 1', 'Dataset 2', 'Dataset 3']
+    [data1, data2],
+    labels=['Naive algorithm on CPU', 'Barnes-Hut on CPU']
 )

@@ -142,7 +142,7 @@ void processInput(GLFWwindow *window, std::vector<Body>& bodies, Num scaleX, Num
         Vec barycenter(0.0, 0.0, 0.0);
         Num totalMass = 0.0;
         for (const Body& body : bodies) {
-            const Num mass = body.mu / G;
+            const Num mass = body.mass;
             barycenter += body.position * mass;
             totalMass += mass;
         }
